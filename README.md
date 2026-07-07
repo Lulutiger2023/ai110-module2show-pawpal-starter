@@ -74,14 +74,12 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Feature           | Method(s)                                           | Notes                                                        |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------------ |
+| Task sorting      | `Scheduler.sort_tasks()`                            | Sorts by priority (ascending, 1=highest) first, then by `preferred_time` ("HH:MM") as a tiebreaker, then by duration. Tasks with no preferred_time sort last within their priority group. |
+| Filtering         | `Owner.filter_tasks(pet_name=None, completed=None)` | Filters tasks by pet name and/or completion status; either filter is optional. |
+| Conflict handling | `Scheduler.find_conflicts()`                        | Detects tasks (across all pets, globally) that share the exact same `preferred_time`. Does not detect overlapping durations at different start times. |
+| Recurring tasks   | `Task.next_occurrence()`, `Task.mark_complete()`    | When a recurring task ("daily"/"weekly") is marked complete, a new uncompleted Task is automatically created with its `date` advanced by 1 or 7 days. |
 
 ## 📸 Demo Walkthrough
 
