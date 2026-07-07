@@ -42,13 +42,42 @@ I made two changes as a result:
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+My scheduler considers three main constraints:
+
+1. **Available time** (`available_minutes`) — the hard budget for the day. 
+   `build_schedule()` greedily fills this budget best-first, dropping 
+   tasks that would overflow it.
+2. **Priority** (`priority`, 1 = highest to 3 = lowest) — this is the 
+   primary ordering factor. When time runs out, the lowest-priority 
+   (and longest) tasks are the ones excluded.
+3. **Preferred time** (`preferred_time`) — used as a secondary sort key 
+   within the same priority group, so tasks are still read in a 
+   sensible chronological order, and also used for conflict detection 
+   (two tasks sharing the same time slot).
+
+I decided priority should outrank time when ordering tasks, because the 
+scenario is about a busy owner who needs the *most important* care tasks 
+done first if time is short — a high-priority task at a less convenient 
+time should still come before a low-priority task at a "nicer" time. Time 
+of day matters for readability and conflict-checking, but shouldn't 
+override what actually needs to happen.
+
+`Owner.preferences` (a dict) is modeled in the data but not yet used by 
+the scheduling logic — it's a placeholder for future constraints like 
+"prefers morning walks," which I didn't have time to wire into the 
+sorting/selection logic in this phase.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+One tradeoff is in conflict detection: `find_conflicts()` only flags tasks 
+that share the exact same `preferred_time` string (e.g., two tasks both at 
+"08:00"). It does not detect overlapping durations — for example, a 30-minute 
+task starting at 08:00 and a task starting at 08:15 would genuinely overlap 
+in real time, but aren't flagged because their preferred_time values differ. 
+This is a reasonable simplification for this assignment: exact-match 
+detection is simple, fast, and catches the most obvious scheduling mistakes 
+(double-booking the same slot), even though a full interval-overlap check 
+would be more accurate.
 
 ---
 
@@ -56,13 +85,49 @@ I made two changes as a result:
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used AI (Claude Code, in VS Code) throughout the project in several distinct roles:
+
+- **Design brainstorming**: generated the initial Mermaid.js UML class 
+  diagram from a plain-language description of my four classes and their 
+  attributes/methods.
+- **Scaffolding**: translated the UML into dataclass-based Python stubs, 
+  then later implemented the full logic for each class (sorting, 
+  filtering, recurring tasks, conflict detection).
+- **Design review**: I asked it to review my class skeleton against the 
+  UML before implementing logic, which surfaced two real gaps — a missing 
+  Scheduler-Owner link and a priority type mismatch (int vs. str) that 
+  would have broken sorting.
+- **Test generation**: drafted pytest tests for core behaviors 
+  (task completion, task addition) based on a plain description of what 
+  to verify.
+- **Code evaluation**: reviewed one of my own implemented methods 
+  (`sort_tasks()`) and judged whether it could be simplified.
+
+The most helpful prompts were ones that asked for a *review against a 
+concrete artifact* rather than open-ended help — for example, "review 
+pawpal_system.py against uml.mmd, are there missing relationships or 
+logic bottlenecks?" produced much more useful, specific feedback than a 
+vague "does this look okay?" would have. Prompts that stated my own 
+design decisions explicitly (e.g., "priority is primary, time is a 
+tiebreaker") before asking it to implement also reduced back-and-forth, 
+since the AI didn't have to guess at ambiguous requirements.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+I asked my AI assistant whether `Scheduler.sort_tasks()` could be simplified 
+for readability or performance. It concluded the current version (a single 
+`sorted()` call with a tuple key) was already close to optimal, and 
+explained that Python's `sorted()` calls the key function once per element 
+rather than repeatedly, so there was no performance issue to fix. It offered 
+one minor readability alternative (naming the key function instead of using 
+an inline lambda) but recommended keeping the original.
+
+I verified this reasoning made sense — the compact lambda version is what 
+I kept. More usefully, the AI also flagged an edge case unrelated to my 
+original question: `_time_key()` would raise a ValueError on a malformed 
+preferred_time string (e.g., "8am" instead of "08:00"). I decided not to 
+fix this now since it's out of scope for the current phase, but I noted it 
+as a known limitation to revisit later rather than ignoring it silently.
 
 ---
 
