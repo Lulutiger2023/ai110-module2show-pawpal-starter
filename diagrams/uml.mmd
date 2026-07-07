@@ -8,6 +8,7 @@ classDiagram
         +list~Pet~ pets
         +add_pet(pet Pet) void
         +get_all_tasks() list~Task~
+        +filter_tasks(pet_name str, completed bool) list~Task~
     }
 
     class Pet {
@@ -25,9 +26,11 @@ classDiagram
         +bool is_recurring
         +str recurrence
         +str preferred_time
+        +date date
         +Pet pet
         +bool completed
         +mark_complete() void
+        +next_occurrence() Task
     }
 
     class Scheduler {
@@ -36,6 +39,7 @@ classDiagram
         +int available_minutes
         +sort_tasks() list~Task~
         +build_schedule() list~Task~
+        +find_conflicts() list~tuple~
         +explain_schedule() str
     }
 
