@@ -19,8 +19,22 @@ To support these actions, I designed four classes:
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+Yes. After drafting the initial skeleton, I asked my AI assistant (Claude Code)
+to review pawpal_system.py against the UML. It flagged that Scheduler had no
+connection back to Owner or Pet, meaning Owner.preferences could never
+influence scheduling, and explain_schedule() couldn't reference which pet a
+task belonged to. It also caught a type mismatch: priority was typed as int
+in the UML but str in the code, which would have caused incorrect sort order
+(alphabetical instead of by importance) once sort_tasks() was implemented.
+
+I made two changes as a result:
+1. Changed Task.priority from str to int (1 = highest priority, 3 = lowest)
+   so sorting works correctly.
+2. Added a `pet` back-reference on Task (set automatically inside
+   Pet.add_task), and changed Scheduler to take an `owner: Owner` instead of
+   a flat task list, deriving its tasks internally from owner.pets. This
+   gives the scheduler both pet context and access to owner preferences for
+   future logic.
 
 ---
 
