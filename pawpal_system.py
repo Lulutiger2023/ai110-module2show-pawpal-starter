@@ -55,6 +55,7 @@ class Owner:
 
 class Scheduler:
     def __init__(self, owner: Owner, available_minutes: int):
+        """Build a scheduler for an owner's tasks within a daily time budget."""
         self.owner = owner
         self.available_minutes = available_minutes
         self.tasks: List[Task] = owner.get_all_tasks()
