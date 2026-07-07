@@ -66,14 +66,17 @@ class Scheduler:
     def build_schedule(self) -> List[Task]:
         """Select and order tasks into a daily plan, respecting available_minutes.
 
-        Tasks are considered best-first (highest priority, then shortest). Each
-        task is included while it fits in the remaining time; tasks that would
-        overflow the budget are dropped. Because of the ordering, the tasks left
-        out are the lowest-priority / longest ones.
+        Completed tasks are skipped entirely — they don't compete for the day's
+        time budget. Remaining tasks are considered best-first (highest priority,
+        then shortest). Each task is included while it fits in the remaining time;
+        tasks that would overflow the budget are dropped. Because of the ordering,
+        the tasks left out are the lowest-priority / longest ones.
         """
         remaining = self.available_minutes
         schedule: List[Task] = []
         for task in self.sort_tasks():
+            if task.completed:
+                continue
             if task.duration_minutes <= remaining:
                 schedule.append(task)
                 remaining -= task.duration_minutes
@@ -101,10 +104,20 @@ class Scheduler:
         else:
             lines.append("Included: none — no task fit in the available time.")
 
-        excluded = [t for t in self.sort_tasks() if id(t) not in scheduled_set]
+        excluded = [
+            t
+            for t in self.sort_tasks()
+            if id(t) not in scheduled_set and not t.completed
+        ]
         if excluded:
             lines.append("Excluded (ran out of time — lowest priority / longest first):")
             for task in excluded:
+                lines.append(f"  - {label(task)}")
+
+        completed = [t for t in self.sort_tasks() if t.completed]
+        if completed:
+            lines.append("Already completed:")
+            for task in completed:
                 lines.append(f"  - {label(task)}")
 
         return "\n".join(lines)
