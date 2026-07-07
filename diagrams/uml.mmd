@@ -1,15 +1,40 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
+    %% PawPal+ — pet care scheduling app
     %% Keep this file updated so it matches your final implementation.
 
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Owner {
+        +str name
+        +dict preferences
+        +list~Pet~ pets
+        +add_pet(pet Pet) void
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +Owner owner
+        +list~Task~ tasks
+        +add_task(task Task) void
     }
 
-    ClassName --> AnotherClass : relationship
+    class Task {
+        +str title
+        +int duration_minutes
+        +int priority
+        +bool is_recurring
+        +str recurrence
+        +str preferred_time
+    }
+
+    class Scheduler {
+        +list~Task~ tasks
+        +int available_minutes
+        +sort_tasks() list~Task~
+        +build_schedule() list~Task~
+        +explain_schedule() str
+    }
+
+    Owner "1" --> "*" Pet : owns
+    Pet "*" --> "1" Owner : belongs to
+    Pet "1" --> "*" Task : has
+    Scheduler "1" --> "*" Task : manages
