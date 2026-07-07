@@ -24,9 +24,11 @@ classDiagram
         +bool is_recurring
         +str recurrence
         +str preferred_time
+        +Pet pet
     }
 
     class Scheduler {
+        +Owner owner
         +list~Task~ tasks
         +int available_minutes
         +sort_tasks() list~Task~
@@ -37,4 +39,6 @@ classDiagram
     Owner "1" --> "*" Pet : owns
     Pet "*" --> "1" Owner : belongs to
     Pet "1" --> "*" Task : has
+    Task "*" --> "1" Pet : belongs to
+    Scheduler "1" --> "1" Owner : plans for
     Scheduler "1" --> "*" Task : manages

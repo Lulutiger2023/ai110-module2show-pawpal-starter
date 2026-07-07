@@ -13,10 +13,11 @@ from typing import List, Optional
 class Task:
     title: str
     duration_minutes: int
-    priority: str  # "low" | "medium" | "high"
+    priority: int  # 1 = highest, 3 = lowest
     is_recurring: bool = False
     recurrence: Optional[str] = None  # "daily" | "weekly" | None
     preferred_time: Optional[str] = None  # e.g. "08:00"
+    pet: Optional["Pet"] = None
 
 
 @dataclass
@@ -28,7 +29,8 @@ class Pet:
 
     def add_task(self, task: Task) -> None:
         """Add a care task to this pet's task list."""
-        pass
+        task.pet = self
+        self.tasks.append(task)
 
 
 @dataclass
@@ -39,13 +41,17 @@ class Owner:
 
     def add_pet(self, pet: Pet) -> None:
         """Add a pet to this owner's pet list."""
-        pass
+        pet.owner = self
+        self.pets.append(pet)
 
 
 class Scheduler:
-    def __init__(self, tasks: List[Task], available_minutes: int):
-        self.tasks = tasks
+    def __init__(self, owner: Owner, available_minutes: int):
+        self.owner = owner
         self.available_minutes = available_minutes
+        self.tasks: List[Task] = [
+            task for pet in owner.pets for task in pet.tasks
+        ]
 
     def sort_tasks(self) -> List[Task]:
         """Sort tasks by priority and/or duration."""

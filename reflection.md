@@ -4,9 +4,6 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
-
 The three core actions a user should be able to perform are:
 
 1. **Add/edit a pet care task** — such as a walk, feeding, medication, or grooming session, including its duration and priority.
