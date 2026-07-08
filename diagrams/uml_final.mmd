@@ -1,0 +1,64 @@
+classDiagram
+    %% PawPal+ — pet care scheduling app
+    %% FINAL diagram: matches pawpal_system.py as built.
+    %% (diagrams/uml.mmd is kept as the original draft.)
+    direction LR
+
+    class Owner {
+        +str name
+        +dict preferences
+        +list~Pet~ pets
+        +add_pet(pet Pet) void
+        +get_all_tasks() list~Task~
+        +filter_tasks(pet_name str, completed bool) list~Task~
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +Owner owner
+        +list~Task~ tasks
+        +add_task(task Task) void
+    }
+
+    class Task {
+        +str title
+        +int duration_minutes
+        +int priority
+        +bool is_recurring
+        +str recurrence
+        +str preferred_time
+        +date date
+        +Pet pet
+        +bool completed
+        +next_occurrence() Task
+        +mark_complete() void
+    }
+
+    class Scheduler {
+        +Owner owner
+        +int available_minutes
+        +list~Task~ tasks
+        -_time_key(task Task)$ int
+        +sort_tasks() list~Task~
+        +build_schedule() list~Task~
+        +find_conflicts() list~tuple~Task, Task~~
+        +explain_schedule() str
+    }
+
+    note for Task "date defaults to today in __post_init__ when unset.\nrecurrence: 'daily' | 'weekly' | None."
+    note for Scheduler "tasks is a snapshot of owner.get_all_tasks() taken at construction."
+
+    %% --- Structural relationships (references held) ---
+    Owner "1" o-- "*" Pet : owns / pets
+    Pet "*" --> "1" Owner : owner (back-ref)
+    Pet "1" o-- "*" Task : has / tasks
+    Task "*" --> "0..1" Pet : pet (back-ref, optional)
+    Scheduler "1" --> "1" Owner : plans for
+
+    %% --- Runtime interactions (method-level dependencies) ---
+    Scheduler ..> Owner : get_all_tasks() at init
+    Scheduler ..> Task : sorts / schedules / finds conflicts
+    Owner ..> Task : traverses pets -> tasks
+    Task ..> Task : next_occurrence() builds next
+    Task ..> Pet : mark_complete() appends next occurrence to pet.tasks
