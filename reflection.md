@@ -133,28 +133,79 @@ as a known limitation to revisit later rather than ignoring it silently.
 
 ## 4. Testing and Verification
 
-**a. What you tested**
+- **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+  I tested the four core algorithmic behaviors added in Phase 4, organized 
+  around 5 groups of tests (22 total):
 
-**b. Confidence**
+  1. **Sorting order** — priority as the primary key, preferred_time and 
+     duration as tiebreakers, including the case where a task has no 
+     preferred_time.
+  2. **Budget-constrained scheduling** — tasks that fit exactly at the time 
+     boundary, tasks that overflow the budget (verifying a smaller later task 
+     still gets picked up rather than the scheduler stopping early), and 
+     completed tasks correctly freeing up budget instead of competing for it.
+  3. **Recurring task completion** — marking a daily/weekly task complete 
+     correctly appends a new occurrence dated +1 or +7 days out, while a 
+     non-recurring or unrecognized-recurrence task appends nothing.
+  4. **Conflict detection** — two tasks at the same time across different 
+     pets are flagged, three tasks at the same time produce all 3 pairs, and 
+     completed or untimed tasks are correctly excluded from conflicts.
+  5. **Empty/boundary cases** — an owner with no pets, or a pet with no tasks, 
+     produces empty results everywhere without crashing.
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+  These were important because they're exactly the places where a small 
+  mistake (like an off-by-one on a boundary, or including a completed task in 
+  the budget) would silently produce a subtly wrong schedule rather than an 
+  obvious crash — the kind of bug that's easy to miss just from eyeballing 
+  `main.py` output once.
+
+  **b. Confidence**
+
+  I'd rate my confidence at 4/5. All 22 tests pass, and they specifically 
+  target the boundary conditions most likely to hide bugs, not just the 
+  happy path. The main gaps are things I know about rather than things I'm 
+  unsure of: `preferred_time` has no format validation (a malformed string 
+  would raise an error instead of failing gracefully), and `Owner.preferences` 
+  is modeled but not yet used by any scheduling logic.
+
+  If I had more time, I'd test: what happens with an invalid `preferred_time` 
+  string (e.g., "8am" or "25:99"); a task with `duration_minutes` of 0; 
+  multiple recurring tasks completed in the same run to confirm they don't 
+  interfere with each other's next-occurrence dates; and `explain_schedule()`'s 
+  full text output directly, to lock down its formatting as a contract rather 
+  than only testing the data it's built from.
 
 ---
 
 ## 5. Reflection
 
-**a. What went well**
+- **a. What went well**
 
-- What part of this project are you most satisfied with?
+  I'm most satisfied with the recurring-task and conflict-detection logic — 
+  they were the parts I was least sure how to approach at the start (especially 
+  figuring out that daily/weekly recurrence needed an actual `date` field, not 
+  just a label), and the final implementation handles the edge cases (unknown 
+  recurrence values, tasks with no pet) cleanly rather than just working for 
+  the obvious case.
 
-**b. What you would improve**
+  **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+  If I did another iteration, I'd want to actually wire `Owner.preferences` 
+  into the scheduling logic — right now it's modeled in the data but has no 
+  effect on sorting or selection, which is a gap between what the system 
+  looks like it can do and what it actually does. I'd also add input 
+  validation for `preferred_time` so a malformed time string fails gracefully 
+  instead of raising an error, and extend conflict detection to catch 
+  overlapping time ranges, not just exact-match start times.
 
-**c. Key takeaway**
+  **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+  The biggest thing I learned is that AI is very good at *implementing* a 
+  decision once I've made it, but not at *making* the decision for me — and 
+  trying to skip that step (by asking vague questions instead of stating my 
+  own design choices) produced worse results than being explicit up front. 
+  Being the "lead architect" meant the real work was deciding things like 
+  "priority beats time" or "conflicts are global, not per-pet" — the AI could 
+  build any of those correctly, but it couldn't tell me which one was right 
+  for this scenario.
