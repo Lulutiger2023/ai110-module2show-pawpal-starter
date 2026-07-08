@@ -22,6 +22,17 @@ Your final app should:
 - Display the plan clearly (and ideally explain the reasoning)
 - Include tests for the most important scheduling behaviors
 
+## Features
+
+Algorithms implemented in `pawpal_system.py`:
+
+- **Priority-based sorting with time and duration tiebreakers** — `Scheduler.sort_tasks()` (priority ascending, then `preferred_time`, then `duration_minutes`)
+- **Greedy time-budgeted scheduling** — `Scheduler.build_schedule()` (fills `available_minutes` best-first, skipping completed tasks)
+- **Time-based filtering by pet and completion status** — `Owner.filter_tasks()`
+- **Daily/weekly recurring task auto-recreation** — `Task.next_occurrence()` and `Task.mark_complete()`
+- **Global scheduling conflict detection** — `Scheduler.find_conflicts()` (tasks sharing a `preferred_time`, across all pets)
+- **Human-readable plan explanation** — `Scheduler.explain_schedule()`
+
 ## Getting started
 
 ### Setup
@@ -98,10 +109,36 @@ tests/test_pawpal.py ......................                              [100%]
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+
+1. Enter your name as the owner, then add one or more pets by name and species.
+2. For each pet, add care tasks with a title, duration, priority (low/medium/high), 
+   and optionally a preferred time (e.g., 08:00).
+3. Added tasks appear in a live table showing which pet they belong to, their 
+   duration, priority, and completion status.
+4. Set the available minutes for the day and click "Generate schedule."
+5. The scheduler sorts tasks by priority (then time, then duration), selects 
+   as many as fit within the time budget, and flags any tasks that share the 
+   exact same time slot as a scheduling conflict — shown as a warning above 
+   the plan.
+6. Tasks that didn't fit, or that are already marked complete, are tucked 
+   into collapsible sections so the main focus stays on today's actual plan.
+
+Key Scheduler behaviors shown: priority-first sorting with time/duration 
+tiebreakers, budget-constrained task selection, and cross-pet conflict 
+detection.
+
+Sample output :
+
+```
+=== Today's Schedule ===
+Daily plan for Jordan (45/60 min used):
+Included:
+  - Feeding (Biscuit, priority 1, 10 min)
+  - Morning walk (Biscuit, priority 1, 30 min)
+  - Litter box cleaning (Mochi, priority 2, 5 min)
+Excluded (ran out of time — lowest priority / longest first):
+  - Play session (Mochi, priority 3, 20 min)
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
