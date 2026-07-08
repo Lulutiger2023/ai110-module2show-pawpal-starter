@@ -69,8 +69,21 @@ pytest --cov
 Sample test output:
 
 ```
-# Paste your pytest output here
+$ python -m pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.13.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/lulutiger/Desktop/codepath/ai110-module2show-pawpal-starter
+plugins: anyio-4.14.1
+collected 22 items                                                             
+
+tests/test_pawpal.py ......................                              [100%]
+
+============================== 22 passed in 0.05s ==============================
+
 ```
+
+**Confidence Level: ⭐⭐⭐⭐ (4/5)** — Core scheduling logic is well-covered by automated tests, including tricky edge cases (exact-fit boundaries, completed tasks freeing budget, recurring task state mutation). One star withheld because `preferred_time` parsing has no input validation (a malformed string like "8am" would raise an error rather than fail gracefully), and `Owner.preferences` isn't yet used by the scheduling logic.
+
 
 ## 📐 Smarter Scheduling
 
