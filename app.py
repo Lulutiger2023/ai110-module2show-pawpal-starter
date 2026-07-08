@@ -1,3 +1,5 @@
+from datetime import time
+
 import streamlit as st
 from pawpal_system import Owner, Pet, Task, Scheduler
 
@@ -86,6 +88,12 @@ with col3:
 
 assign_to = st.selectbox("Assign to pet", pet_names) if pet_names else None
 
+time_col1, time_col2 = st.columns([1, 2])
+with time_col1:
+    set_time = st.checkbox("Set preferred time", value=True)
+with time_col2:
+    preferred = st.time_input("Preferred time", value=time(8, 0), disabled=not set_time)
+
 if st.button("Add task"):
     if not pet_names:
         st.warning("Add a pet first, then assign tasks to it.")
@@ -96,6 +104,7 @@ if st.button("Add task"):
                 title=task_title,
                 duration_minutes=int(duration),
                 priority=PRIORITY_TO_INT[priority],
+                preferred_time=preferred.strftime("%H:%M") if set_time else None,
             )
         )
         st.success(f"Added '{task_title}' to {pet.name}.")
@@ -127,9 +136,69 @@ available_minutes = st.number_input(
     "Available minutes for the day", min_value=1, max_value=1440, value=120
 )
 
+def _task_label(task):
+    who = task.pet.name if task.pet else "unassigned"
+    return f"{task.title} ({who}, priority {task.priority}, {task.duration_minutes} min)"
+
+
 if st.button("Generate schedule"):
     if not owner.get_all_tasks():
         st.warning("Add at least one task before generating a schedule.")
     else:
-        scheduler = Scheduler(owner, int(available_minutes))
-        st.code(scheduler.explain_schedule())
+        st.session_state.scheduler = Scheduler(owner, int(available_minutes))
+
+if "scheduler" in st.session_state:
+    scheduler = st.session_state.scheduler
+
+    # 1. Flag conflicts prominently, one warning per conflicting pair.
+    conflicts = scheduler.find_conflicts()
+    if conflicts:
+        st.markdown("#### ⚠️ Scheduling conflicts")
+        for a, b in conflicts:
+            st.warning(
+                f"**{a.preferred_time}** — “{a.title}” and “{b.title}” are both "
+                f"scheduled at the same time."
+            )
+
+    # 2. Show today's actual plan as the main focus.
+    scheduled = scheduler.build_schedule()
+    scheduled_ids = {id(t) for t in scheduled}
+    used = sum(t.duration_minutes for t in scheduled)
+
+    st.markdown("#### ✅ Today's plan")
+    st.success(
+        f"Plan for {owner.name}: {len(scheduled)} task(s), "
+        f"{used}/{scheduler.available_minutes} min used."
+    )
+    if scheduled:
+        st.table(
+            [
+                {
+                    "when": t.preferred_time or "—",
+                    "task": t.title,
+                    "pet": t.pet.name if t.pet else "-",
+                    "duration_minutes": t.duration_minutes,
+                    "priority": INT_TO_PRIORITY.get(t.priority, t.priority),
+                }
+                for t in scheduled
+            ]
+        )
+    else:
+        st.info("No task fit in the available time.")
+
+    # 3. Keep excluded / completed tasks secondary.
+    sorted_tasks = scheduler.sort_tasks()
+    excluded = [
+        t for t in sorted_tasks if id(t) not in scheduled_ids and not t.completed
+    ]
+    completed = [t for t in sorted_tasks if t.completed]
+
+    if excluded:
+        with st.expander(f"Excluded — ran out of time ({len(excluded)})"):
+            for task in excluded:
+                st.write(f"- {_task_label(task)}")
+
+    if completed:
+        with st.expander(f"Already completed ({len(completed)})"):
+            for task in completed:
+                st.write(f"- {_task_label(task)}")
